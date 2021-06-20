@@ -4,13 +4,13 @@ const express = require("express");
 const app = express();
 const upload = require("./handlers/multer");
 const cloudinary = require("cloudinary");
+const moment = require("moment");
 require("dotenv").config();
 require("./handlers/cloudinary");
 
 const exphbs = require('express-handlebars');
 app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
-
 app.get("/", (req, res) => res.render("index"));
 
 // app.post("/uploads", upload.single("image"), (req, res) => {
@@ -32,8 +32,37 @@ app.get("/api/files", async (req, res) => {
     });
     return res.json(images)
 });
+
+//------------------------This returns all the images' object info in the back-end console.
+
 cloudinary.v2.api.resources(
-    function (error, result) { console.log(result, error); });
+    function (error, result) {
+        console.log(result, error);
+    });
+
+    //----------------------This returns object with all stored data to convert to front end format
+
+
+app.get("/files", async (req, res) => {
+    const images = await cloudinary.v2.api.resources({
+        type: "upload",
+    });
+    // Check if files
+    if (!images || images.length === 0) {
+        return res.status(404).json({
+            err: "No files exist"
+        });
+    }
+    // Files exist
+    res.render("files", {
+        images: images
+    });
+});
+//-----------------------Delete Route 
+app.delete("/files", (req, res) => {
+    let id = req.body.id;
+    cloudinary.v2.api.delete_resources([id], function (error, result) { console.log(result); });
+});
 
 
 
